@@ -1,7 +1,9 @@
 ﻿
+using DinkToPdf;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 internal class Program
@@ -19,21 +21,97 @@ internal class Program
         dynamic body = await getPageContent(result.token);
         DetailBody bodyContent = JsonConvert.DeserializeObject<DetailBody>(body);
 
-        await generateHTML( headerContect, bodyContent);
+        string html =  generateHTML( headerContect, bodyContent);
+
+        generatePDF(html);
     }
 
-    public static async Task generateHTML(Headers headerContect, DetailBody detailBody)
+    public static string generateHTML(Headers headerContect, DetailBody detailBody)
     {
+        string html = string.Empty;
+
         try
         {
-           //code here
+
+            html = "<!DOCTYPE html>\r\n<html>\r\n  <head>\r\n    <style>\r\n      * {\r\n        box-sizing: border-box;\r\n      }\r\n\r\n      /* Create two unequal columns that floats next to each other */\r\n      .column {\r\n        float: left;\r\n      }\r\n\r\n      .left {\r\n        width: 50%;\r\n      }\r\n\r\n      .right {\r\n        width: 50%;\r\n      }\r\n\r\n      /* Clear floats after the columns */\r\n      .row:after {\r\n        content: \"\";\r\n        display: table;\r\n        clear: both;\r\n      }\r\n\r\n      body{\r\n          padding:10px;\r\n          border:1px solid;\r\n          /*height: 3508px;*/\r\n          /*width: 2480px;*/\r\n      }\r\n    </style>\r\n  </head>\r\n  <body>\r\n    <center>"
+
+            + " <center>\r\n<p style=\"font-size:10px;padding:0;margin:0;\">\r\n" + headerContect.godName + "\r\n      </p>\r\n      <p style=\"font-size:12px;padding:0;margin:0;\">\r\n" + headerContect.subjectTo + "\r\n      </p>\r\n      <p style=\"font-size:14px;padding:0;margin:0;\">" + headerContect.delOrderHeading + "</p>\r\n      <p style=\"font-size:16px;padding:0;margin:0;\">" + headerContect.brokerName + "</p>\r\n      <p style=\"font-size:10px;padding:0;margin:0;\">\r\n" + headerContect.brokerAdd1 + headerContect.brokerAdd2 + "\r\n      </p>\r\n      <p style=\"font-size:10px;padding:0;margin:0;\">" + headerContect.brokerAdd3 + "</p>\r\n    </center>"
+
+            //order date
+            + "<p style=\"font-size:14px;padding:0;margin:0;\">Order Date : " + detailBody.orderDate + "</p>"
+
+            + "<div class=\"row\" style=\"border:1px solid black;\">\r\n      <div class=\"column left\" style=\"padding:0;margin:0;\">\r\n        <p\r\n          style=\"font-size:12px;padding:0 0 0 5px;margin:0;border-right:1px solid black;\"\r\n        >\r\n          Seller Name & Address Order.No :\r\n        </p>\r\n      </div>\r\n      <div class=\"column right\" style=\"padding:0;margin:0;\">\r\n        <p style=\"font-size:12px;padding:0 0 0 5px;margin:0;\">\r\n          Buyer Name & Address Order.No :\r\n        </p>\r\n      </div>\r\n    </div>"
+
+            + "<div class=\"row\" style=\"border:1px solid black;\">\r\n      <div class=\"column left\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.buyerAccount.aliaForPrint + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.buyerAccount.address1 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.buyerAccount.address2 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black; height: 12px;\"\r\n        >\r\n" + detailBody.buyerAccount.address3 + "</p>\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black; height: 12px;\"\r\n        >\r\n" + detailBody.buyerAccount.address4 + " </p>\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          GSTIN :" + detailBody.buyerAccount.gstno + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n Confirmed By" + detailBody.buyerAccount.name + "\r\n        </p>\r\n      </div>\r\n      <div class=\"column right\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.name + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address1 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address2 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address3 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          GSTIN : " + detailBody.shipToAccount.gstno + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          STATE : " + detailBody.shipToAccount.state + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          STATE CODE : " + detailBody.shipToAccount.state + "\r\n        </p>\r\n      </div>\r\n    </div>"
+
+            //shipping details
+            + " <div class=\"row\" style=\"border:1px solid black;\">\r\n      <div class=\"column left\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          Shipping Address\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.name + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address1 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address2 + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n" + detailBody.shipToAccount.address3 + "\r\n        </p>\r\n      </div>\r\n      <div class=\"column right\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:12px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          Shipping GST Detail\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          GSTIN : " + detailBody.shipToAccount.gstno + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          STATE : " + detailBody.shipToAccount.state + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;\"\r\n        >\r\n          STATE CODE: " + detailBody.shipToAccount.state + "\r\n        </p>\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;height:12px;\"\r\n        >\r\n          \r\n        </p>\r\n      </div>\r\n    </div>"
+
+            //authorize
+            + "<div class=\"row\" style=\"border:1px solid black;\">\r\n      <div class=\"column left\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Do Authorised By : " + headerContect.brokerName + "\r\n        </p>\r\n      </div>\r\n      <div class=\"column right\" style=\"padding:0 0 0 5px;margin:0;\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          E.Way.Bill : YES\r\n        </p>\r\n      </div>\r\n    </div>"
+
+            //table header
+            + "<div class=\"row\" style=\"border:1px solid black;\">\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;border-left:1px solid black;\"\r\n        >\r\n          Sr.\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:15%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Item Description\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Thick\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Width\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Length\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Grade\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Make\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Pcs\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Qty(P/ton)\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Rate\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Coill.No\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Location\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          HSN.NO\r\n        </p>\r\n      </div>\r\n    </div>";
+
+            //table body
+            //int i = 1;
+            //foreach (var item in detailBody.itemDetail)
+            //{
+            //    html += "<div class=\"row\" style=\"min-height:300px; border:1px solid black;\">\r\n      <div class=\"column\" style=\"width:5%;\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;border-left:1px solid black;\"\r\n        >\r\n"+ i + "\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:15%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n"+item.+"\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Thick\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Width\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Length\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Grade\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Make\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Pcs\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Qty(P/ton)\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Rate\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:5%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Coill.No\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          Location\r\n        </p>\r\n      </div>\r\n      <div class=\"column\" style=\"width:10%\">\r\n        <p\r\n          style=\"font-size:10px;padding:0;margin:0;border-right:1px solid black;border-bottom:1px solid black;\"\r\n        >\r\n          HSN.NO\r\n        </p>\r\n      </div>\r\n    </div>"
+
+
+            //        i++;
+            //}
+
+
+
+
+
+
+
         }
         catch (HttpRequestException e)
         {
             Console.WriteLine("\nException Caught!");
             Console.WriteLine("Message :{0} ", e.Message);
-
         }
+        return html;
+    }
+
+    public static void generatePDF(string html)
+    {
+        //Setup the PDF converter
+        var converter = new BasicConverter(new PdfTools());
+
+        //Set PDF options
+        var options = new HtmlToPdfDocument
+        {
+            GlobalSettings =
+                    {
+                        ColorMode = ColorMode.Color,
+                        Orientation = Orientation.Portrait,
+                        PaperSize = PaperKind.A4,
+                        Out = @"C:\Users\ravin\OneDrive\Desktop\sample.pdf"
+                    },
+            Objects =
+                    {
+                        new ObjectSettings
+                        {
+                            PagesCount=true,
+                            HtmlContent=html,
+                            WebSettings = { DefaultEncoding = "UTF-8"},
+                            HeaderSettings =
+                            {
+                                FontSize=10,
+                                Line=true,
+                                Spacing=3
+                            }
+                        }
+                    }
+        };
+
+        converter.Convert(options);
+
     }
 
 
