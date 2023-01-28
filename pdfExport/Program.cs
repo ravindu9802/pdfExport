@@ -19,6 +19,21 @@ internal class Program
         dynamic body = await getPageContent(result.token);
         DetailBody bodyContent = JsonConvert.DeserializeObject<DetailBody>(body);
 
+        await generateHTML( headerContect, bodyContent);
+    }
+
+    public static async Task generateHTML(Headers headerContect, DetailBody detailBody)
+    {
+        try
+        {
+           //code here
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine("\nException Caught!");
+            Console.WriteLine("Message :{0} ", e.Message);
+
+        }
     }
 
 
